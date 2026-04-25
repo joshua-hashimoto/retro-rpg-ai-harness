@@ -53,3 +53,29 @@ def test_gain_exp_levels_up():
     assert new_player.next_exp == 15
     assert new_player.hp == 35  # Full heal
     assert leveled_up is True
+
+
+def test_player_initial_gold():
+    player = PlayerModel(name="Hero")
+    assert player.gold == 10
+
+
+def test_spend_gold_success():
+    player = PlayerModel(name="Hero", gold=20)
+    new_player = player.spend_gold(10)
+    assert new_player.gold == 10
+    assert player.gold == 20  # Original unchanged
+
+
+def test_spend_gold_insufficient():
+    player = PlayerModel(name="Hero", gold=5)
+    new_player = player.spend_gold(10)
+    assert new_player.gold == 5  # Unchanged
+    assert new_player == player
+
+
+def test_gain_gold():
+    player = PlayerModel(name="Hero", gold=10)
+    new_player = player.gain_gold(15)
+    assert new_player.gold == 25
+    assert player.gold == 10  # Original unchanged

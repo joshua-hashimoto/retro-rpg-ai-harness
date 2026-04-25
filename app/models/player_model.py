@@ -6,6 +6,7 @@ class PlayerModel(CharacterModel):
     exp: int = 0
     next_exp: int = 10
     potions: int = 3
+    gold: int = 10
 
     def __init__(self, **data):
         if "max_hp" not in data:
@@ -16,6 +17,8 @@ class PlayerModel(CharacterModel):
             data["attack"] = 5
         if "defense" not in data:
             data["defense"] = 1
+        if "gold" not in data:
+            data["gold"] = 10
         super().__init__(**data)
 
     def use_potion(self) -> "PlayerModel":
@@ -57,3 +60,11 @@ class PlayerModel(CharacterModel):
             updates["hp"] = current_max_hp
 
         return self.model_copy(update=updates), leveled_up
+
+    def spend_gold(self, amount: int) -> "PlayerModel":
+        if self.gold >= amount:
+            return self.model_copy(update={"gold": self.gold - amount})
+        return self
+
+    def gain_gold(self, amount: int) -> "PlayerModel":
+        return self.model_copy(update={"gold": self.gold + amount})
