@@ -1,6 +1,12 @@
 from app.models.player_model import PlayerModel
 from app.models.enemy_model import EnemyModel
-from app.game.battle import calculate_damage, execute_attack, player_turn, enemy_turn
+from app.game.battle import (
+    calculate_damage,
+    execute_attack,
+    player_turn,
+    enemy_turn,
+    battle,
+)
 
 
 def test_calculate_damage_simple():
@@ -82,3 +88,23 @@ def test_enemy_turn():
     new_player, log = enemy_turn(enemy, player)
     assert new_player.hp == 28
     assert "attacked" in log.lower()
+
+
+def test_battle_player_wins():
+    player = PlayerModel(name="Hero", attack=20, hp=30, max_hp=30)
+    enemy = EnemyModel(
+        name="Slime", max_hp=10, hp=10, attack=3, defense=0, exp_reward=5, is_boss=False
+    )
+    new_player, victory, msg = battle(player, enemy, player_action_provider=lambda p, e: "attack")
+    assert victory is True
+    assert new_player.alive is True
+
+
+def test_battle_enemy_wins():
+    player = PlayerModel(name="Weak", attack=1, hp=10, max_hp=10, defense=0)
+    enemy = EnemyModel(
+        name="Strong", max_hp=100, hp=100, attack=10, defense=0, exp_reward=50, is_boss=False
+    )
+    new_player, victory, msg = battle(player, enemy, player_action_provider=lambda p, e: "attack")
+    assert victory is False
+    assert not new_player.alive

@@ -1,3 +1,5 @@
+from typing import Callable, Optional
+
 from app.models.character_model import CharacterModel
 from app.models.player_model import PlayerModel
 from app.models.enemy_model import EnemyModel
@@ -38,3 +40,44 @@ def enemy_turn(enemy: EnemyModel, player: PlayerModel) -> tuple[PlayerModel, str
     new_player, damage = execute_attack(enemy, player)
     log = f"{enemy.name} attacked {player.name} for {damage} damage!"
     return (new_player, log)
+
+
+def battle(
+    player: PlayerModel,
+    enemy: EnemyModel,
+    player_action_provider: Optional[Callable[[PlayerModel, EnemyModel], str]] = None,
+) -> tuple[PlayerModel, bool, str]:
+    """
+    Main battle loop.
+    player_action_provider: function that takes (player, enemy) and returns "attack" or "potion".
+                          If None, defaults to "attack" (for testing/simple AI).
+    """
+    current_player = player
+    current_enemy = enemy
+    logs = []
+
+    while current_player.alive and current_enemy.alive:
+        if player_action_provider:
+            action = player_action_provider(current_player, current_enemy)
+        else:
+            action = "attack"
+
+        current_player, current_enemy, log = player_turn(current_player, current_enemy, action)
+        logs.append(log)
+
+        if not current_enemy.alive:
+            break
+
+        current_player, log = enemy_turn(current_enemy, current_player)
+        logs.append(log)
+
+    if current_player.alive:
+        result_msg = f"Victory! {current_player.name} defeated {enemy.name}!\n" + "\n".join(
+            logs[-3:]
+        )
+        return (current_player, True, result_msg)
+    else:
+        result_msg = f"Defeat! {current_player.name} was defeated by {enemy.name}.\n" + "\n".join(
+            logs[-3:]
+        )
+        return (current_player, False, result_msg)
