@@ -1,3 +1,4 @@
+import random
 from typing import Callable, Optional
 
 from app.models.character_model import CharacterModel
@@ -36,10 +37,26 @@ def player_turn(
         return (player, enemy, "Invalid action")
 
 
-def enemy_turn(enemy: EnemyModel, player: PlayerModel) -> tuple[PlayerModel, str]:
-    new_player, damage = execute_attack(enemy, player)
-    log = f"{enemy.name} attacked {player.name} for {damage} damage!"
-    return (new_player, log)
+def enemy_turn(enemy: EnemyModel, player: PlayerModel) -> tuple[PlayerModel, str, str]:
+    """
+    Returns: (updated_player, log_message, enemy_action)
+    enemy_action: "attack", "wait", or "flee"
+    """
+    roll = random.random()
+
+    if roll < 0.6:
+        # Attack (60%)
+        new_player, damage = execute_attack(enemy, player)
+        log = f"{enemy.name} attacked {player.name} for {damage} damage!"
+        return (new_player, log, "attack")
+    elif roll < 0.9:
+        # Wait (30%)
+        log = f"{enemy.name} is resting..."
+        return (player, log, "wait")
+    else:
+        # Flee (10%)
+        log = f"{enemy.name} fled from battle!"
+        return (player, log, "flee")
 
 
 def battle(
@@ -68,7 +85,7 @@ def battle(
         if not current_enemy.alive:
             break
 
-        current_player, log = enemy_turn(current_enemy, current_player)
+        current_player, log, enemy_action = enemy_turn(current_enemy, current_player)
         logs.append(log)
 
     if current_player.alive:
