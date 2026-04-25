@@ -70,15 +70,16 @@ def battle(
     player: PlayerModel,
     enemy: EnemyModel,
     player_action_provider: Optional[Callable[[PlayerModel, EnemyModel], str]] = None,
-) -> tuple[PlayerModel, bool, str]:
+) -> tuple[PlayerModel, bool, str, int, int]:
     """
     Main battle loop.
-    player_action_provider: function that takes (player, enemy) and returns "attack" or "potion".
-                          If None, defaults to "attack" (for testing/simple AI).
+    Returns: (updated_player, victory, result_message, exp_gained, gold_gained)
+    If enemy fled: exp_gained=0, gold_gained=0, victory=True (battle ended)
     """
     current_player = player
     current_enemy = enemy
     logs = []
+    enemy_fled = False
 
     while current_player.alive and current_enemy.alive:
         if player_action_provider:
@@ -95,13 +96,21 @@ def battle(
         current_player, log, enemy_action = enemy_turn(current_enemy, current_player)
         logs.append(log)
 
+        if enemy_action == "flee":
+            enemy_fled = True
+            break
+
+    if enemy_fled:
+        result_msg = f"{enemy.name} fled from battle!\n" + "\n".join(logs[-3:])
+        return (current_player, True, result_msg, 0, 0)
+
     if current_player.alive:
         result_msg = f"Victory! {current_player.name} defeated {enemy.name}!\n" + "\n".join(
             logs[-3:]
         )
-        return (current_player, True, result_msg)
+        return (current_player, True, result_msg, enemy.exp_reward, enemy.gold_reward)
     else:
         result_msg = f"Defeat! {current_player.name} was defeated by {enemy.name}.\n" + "\n".join(
             logs[-3:]
         )
-        return (current_player, False, result_msg)
+        return (current_player, False, result_msg, 0, 0)

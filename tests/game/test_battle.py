@@ -205,9 +205,13 @@ def test_battle_player_wins():
         gold_reward=5,
         is_boss=False,
     )
-    new_player, victory, msg = battle(player, enemy, player_action_provider=lambda p, e: "attack")
+    new_player, victory, msg, exp, gold = battle(
+        player, enemy, player_action_provider=lambda p, e: "attack"
+    )
     assert victory is True
     assert new_player.alive is True
+    assert exp == 5
+    assert gold == 5
 
 
 def test_battle_enemy_wins():
@@ -222,6 +226,60 @@ def test_battle_enemy_wins():
         gold_reward=50,
         is_boss=False,
     )
-    new_player, victory, msg = battle(player, enemy, player_action_provider=lambda p, e: "attack")
+    new_player, victory, msg, exp, gold = battle(
+        player, enemy, player_action_provider=lambda p, e: "attack"
+    )
     assert victory is False
     assert not new_player.alive
+    assert exp == 0
+    assert gold == 0
+
+
+def test_battle_with_flee():
+    player = PlayerModel(name="Hero", attack=5, hp=30, max_hp=30)
+    enemy = EnemyModel(
+        name="Slime",
+        max_hp=10,
+        hp=10,
+        attack=3,
+        defense=0,
+        exp_reward=5,
+        gold_reward=5,
+        is_boss=False,
+    )
+
+    def action_provider(p, e):
+        return "attack"
+
+    # Mock enemy to always flee
+    with patch("app.game.battle.enemy_turn") as mock_turn:
+        mock_turn.return_value = (player, "Slime fled!", "flee")
+        new_player, victory, msg, exp, gold = battle(player, enemy, action_provider)
+
+    assert victory is True
+    assert exp == 0
+    assert gold == 0
+    assert "fled" in msg.lower()
+
+
+def test_battle_rewards_gold():
+    player = PlayerModel(name="Hero", attack=20, hp=30, max_hp=30)
+    enemy = EnemyModel(
+        name="Slime",
+        max_hp=10,
+        hp=10,
+        attack=3,
+        defense=0,
+        exp_reward=5,
+        gold_reward=5,
+        is_boss=False,
+    )
+
+    def action_provider(p, e):
+        return "attack"
+
+    new_player, victory, msg, exp, gold = battle(player, enemy, action_provider)
+
+    assert victory is True
+    assert exp == 5
+    assert gold == 5
