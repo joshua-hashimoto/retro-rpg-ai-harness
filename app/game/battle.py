@@ -59,6 +59,13 @@ def enemy_turn(enemy: EnemyModel, player: PlayerModel) -> tuple[PlayerModel, str
         return (player, log, "flee")
 
 
+def show_enemy_status(enemy: EnemyModel) -> str:
+    return f"""{enemy.name}
+HP: {enemy.hp}/{enemy.max_hp}
+Attack: {enemy.attack}
+Defense: {enemy.defense}"""
+
+
 def battle(
     player: PlayerModel,
     enemy: EnemyModel,
