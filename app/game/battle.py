@@ -1,65 +1,68 @@
+"""Battle system functions for the RPG game."""
 import random
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from app.models.character_model import CharacterModel
-from app.models.player_model import PlayerModel
 from app.models.enemy_model import EnemyModel
+from app.models.player_model import PlayerModel
+
+ENEMY_ATTACK_THRESHOLD = 0.6
+ENEMY_WAIT_THRESHOLD = 0.9
 
 
 def calculate_damage(attacker: CharacterModel, defender: CharacterModel) -> int:
+    """Calculate damage dealt from attacker to defender (minimum 1)."""
     return max(1, attacker.attack - defender.defense)
 
 
 def execute_attack(
-    attacker: CharacterModel, defender: CharacterModel
+    attacker: CharacterModel, defender: CharacterModel,
 ) -> tuple[CharacterModel, int]:
+    """Execute an attack and return the updated defender with damage dealt."""
     damage = calculate_damage(attacker, defender)
     new_defender = defender.take_damage(damage)
     return (new_defender, damage)
 
 
 def player_turn(
-    player: PlayerModel, enemy: EnemyModel, action: str
+    player: PlayerModel, enemy: EnemyModel, action: str,
 ) -> tuple[PlayerModel, EnemyModel, str]:
+    """Process the player's turn and return updated player, enemy, and log message."""
     if action == "attack":
         new_enemy, damage = execute_attack(player, enemy)
         log = f"{player.name} attacked {enemy.name} for {damage} damage!"
         return (player, new_enemy, log)
-    elif action == "potion":
+    if action == "potion":
         if player.potions > 0:
             new_player = player.use_potion()
             log = f"{player.name} used a potion and recovered HP!"
             return (new_player, enemy, log)
-        else:
-            log = "You have no potions left!"
-            return (player, enemy, log)
-    else:
-        return (player, enemy, "Invalid action")
+        log = "You have no potions left!"
+        return (player, enemy, log)
+    return (player, enemy, "Invalid action")
 
 
 def enemy_turn(enemy: EnemyModel, player: PlayerModel) -> tuple[PlayerModel, str, str]:
-    """
-    Returns: (updated_player, log_message, enemy_action)
-    enemy_action: "attack", "wait", or "flee"
+    """Process the enemy's turn.
+
+    Return updated player, log message, and enemy action.
+    Enemy action is one of: "attack", "wait", or "flee".
     """
     roll = random.random()
 
-    if roll < 0.6:
-        # Attack (60%)
+    if roll < ENEMY_ATTACK_THRESHOLD:
         new_player, damage = execute_attack(enemy, player)
         log = f"{enemy.name} attacked {player.name} for {damage} damage!"
         return (new_player, log, "attack")
-    elif roll < 0.9:
-        # Wait (30%)
+    if roll < ENEMY_WAIT_THRESHOLD:
         log = f"{enemy.name} is resting..."
         return (player, log, "wait")
-    else:
-        # Flee (10%)
-        log = f"{enemy.name} fled from battle!"
-        return (player, log, "flee")
+    log = f"{enemy.name} fled from battle!"
+    return (player, log, "flee")
 
 
 def show_enemy_status(enemy: EnemyModel) -> str:
+    """Return a formatted string with the enemy's current status."""
     return f"""{enemy.name}
 HP: {enemy.hp}/{enemy.max_hp}
 Attack: {enemy.attack}
@@ -69,12 +72,12 @@ Defense: {enemy.defense}"""
 def battle(
     player: PlayerModel,
     enemy: EnemyModel,
-    player_action_provider: Optional[Callable[[PlayerModel, EnemyModel], str]] = None,
+    player_action_provider: Callable[[PlayerModel, EnemyModel], str] | None = None,
 ) -> tuple[PlayerModel, bool, str, int, int]:
-    """
-    Main battle loop.
-    Returns: (updated_player, victory, result_message, exp_gained, gold_gained)
-    If enemy fled: exp_gained=0, gold_gained=0, victory=True (battle ended)
+    """Run the main battle loop.
+
+    Return (updated_player, victory, result_message, exp_gained, gold_gained).
+    If enemy fled: exp_gained=0, gold_gained=0, victory=True (battle ended).
     """
     current_player = player
     current_enemy = enemy
@@ -106,11 +109,10 @@ def battle(
 
     if current_player.alive:
         result_msg = f"Victory! {current_player.name} defeated {enemy.name}!\n" + "\n".join(
-            logs[-3:]
+            logs[-3:],
         )
         return (current_player, True, result_msg, enemy.exp_reward, enemy.gold_reward)
-    else:
-        result_msg = f"Defeat! {current_player.name} was defeated by {enemy.name}.\n" + "\n".join(
-            logs[-3:]
-        )
-        return (current_player, False, result_msg, 0, 0)
+    result_msg = f"Defeat! {current_player.name} was defeated by {enemy.name}.\n" + "\n".join(
+        logs[-3:],
+    )
+    return (current_player, False, result_msg, 0, 0)

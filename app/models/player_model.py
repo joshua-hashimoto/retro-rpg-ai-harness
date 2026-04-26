@@ -1,14 +1,18 @@
+"""Player model with level, experience, potions, and gold."""
 from app.models.character_model import CharacterModel
 
 
 class PlayerModel(CharacterModel):
+    """Pydantic model representing the player character."""
+
     level: int = 1
     exp: int = 0
     next_exp: int = 10
     potions: int = 3
     gold: int = 10
 
-    def __init__(self, **data):
+    def __init__(self, **data: object) -> None:
+        """Initialize the player with sensible defaults when stats are omitted."""
         if "max_hp" not in data:
             data["max_hp"] = 30
         if "hp" not in data:
@@ -22,14 +26,17 @@ class PlayerModel(CharacterModel):
         super().__init__(**data)
 
     def use_potion(self) -> "PlayerModel":
+        """Consume one potion and restore HP to max; return self if no potions remain."""
         if self.potions > 0:
             return self.model_copy(update={"potions": self.potions - 1, "hp": self.max_hp})
         return self
 
     def add_potion(self, amount: int) -> "PlayerModel":
+        """Return a copy with potions increased by amount."""
         return self.model_copy(update={"potions": self.potions + amount})
 
     def gain_exp(self, amount: int) -> tuple["PlayerModel", bool]:
+        """Apply exp gain, handle level-ups, and return updated player with level-up flag."""
         current_exp = self.exp + amount
         current_level = self.level
         current_next_exp = self.next_exp
@@ -62,9 +69,11 @@ class PlayerModel(CharacterModel):
         return self.model_copy(update=updates), leveled_up
 
     def spend_gold(self, amount: int) -> "PlayerModel":
+        """Spend gold if funds are sufficient; return self otherwise."""
         if self.gold >= amount:
             return self.model_copy(update={"gold": self.gold - amount})
         return self
 
     def gain_gold(self, amount: int) -> "PlayerModel":
+        """Return a copy with gold increased by amount."""
         return self.model_copy(update={"gold": self.gold + amount})
