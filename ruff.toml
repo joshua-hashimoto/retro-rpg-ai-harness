@@ -1,0 +1,43 @@
+line-length = 100
+indent-width = 4
+target-version = "py312"
+exclude = [
+    ".git",
+    ".venv",
+    "__pycache__",
+    ".ruff_cache",
+    "build",
+    "dist",
+    "node_modules",
+]
+
+[lint]
+select = [
+    "E",      # pycodestyle errors
+    "F",      # pyflakes
+    "D",      # pydocstyle (docstrings)
+    "ANN",    # flake8-annotations (type annotations)
+    "PL",     # pylint (code quality)
+    "INP",    # flake8-imports (package structure)
+    "C90",    # mccabe (complexity)
+    "RUF",    # ruff-specific rules
+]
+ignore = [
+    "S101",   # assert used in tests (allowed in test files)
+]
+fixable = ["ALL"]
+
+[lint.per-file-ignores]
+"tests/**/*.py" = [
+    "S101",   # assert is fine in tests
+    "ANN",    # type annotations less strict in tests
+    "ARG",    # unused arguments in tests are common
+    "PLR2004", # magic values in tests are okay
+    "RUF059", # unused unpacked variables in tests are okay
+    "D",
+]
+
+[format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
