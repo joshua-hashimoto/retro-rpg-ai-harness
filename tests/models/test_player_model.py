@@ -79,3 +79,4 @@ def test_gain_gold():
     new_player = player.gain_gold(15)
     assert new_player.gold == 25
     assert player.gold == 10  # Original unchanged
+

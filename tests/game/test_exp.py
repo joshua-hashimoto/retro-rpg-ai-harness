@@ -1,5 +1,5 @@
-from app.models.player_model import PlayerModel
 from app.game.exp import gain_exp_and_check_level_up
+from app.models.player_model import PlayerModel
 
 
 def test_gain_exp_no_level_up():

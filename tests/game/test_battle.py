@@ -1,13 +1,14 @@
 from unittest.mock import patch
-from app.models.player_model import PlayerModel
-from app.models.enemy_model import EnemyModel
+
 from app.game.battle import (
+    battle,
     calculate_damage,
+    enemy_turn,
     execute_attack,
     player_turn,
-    enemy_turn,
-    battle,
 )
+from app.models.enemy_model import EnemyModel
+from app.models.player_model import PlayerModel
 
 
 def test_calculate_damage_simple():
@@ -206,7 +207,7 @@ def test_battle_player_wins():
         is_boss=False,
     )
     new_player, victory, msg, exp, gold = battle(
-        player, enemy, player_action_provider=lambda p, e: "attack"
+        player, enemy, player_action_provider=lambda p, e: "attack",
     )
     assert victory is True
     assert new_player.alive is True
@@ -227,7 +228,7 @@ def test_battle_enemy_wins():
         is_boss=False,
     )
     new_player, victory, msg, exp, gold = battle(
-        player, enemy, player_action_provider=lambda p, e: "attack"
+        player, enemy, player_action_provider=lambda p, e: "attack",
     )
     assert victory is False
     assert not new_player.alive
