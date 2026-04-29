@@ -1,0 +1,8 @@
+[importlinter]
+root_package = app
+
+[importlinter:contract:one]
+name = "Forbid game → models imports"
+type = forbidden
+source_modules = app.models
+forbidden_modules = app.game
