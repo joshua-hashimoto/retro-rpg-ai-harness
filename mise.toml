@@ -1,3 +1,10 @@
 [tools]
-python = "3.14"
+bun = "latest"
+lefthook = "latest"
+python = "3.14.4"
+task = "latest"
 uv = "latest"
+
+[env]
+_.file = ".env"
+
