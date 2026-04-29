@@ -1,0 +1,42 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: "3"
+
+vars:
+  GREETING: Hello, world!
+
+tasks:
+  onboarding:
+    desc: Print a greeting message
+    cmds:
+      - echo "{{.GREETING}}"
+    silent: true
+
+  check:lint:
+    desc: Call ruff for linting
+    cmds:
+      - uv run ruff check {{.CLI_ARGS}} --output-format json
+      # - uv run ruff check {{.CLI_ARGS}}
+
+  check:imports:
+    desc: Call lint-imports for import checks
+    cmds:
+      - uv run lint-imports
+
+  check:types:
+    desc: Call mypy to check for type errors
+    cmds:
+      - uv run mypy . --output json
+
+  check:tests:
+    desc: Run pytest
+    cmds:
+      - uv run pytest
+
+  check:
+    desc: Call all checks
+    cmds:
+      - task check:lint
+      - task check:imports
+      - task check:types
+      - task check:tests
