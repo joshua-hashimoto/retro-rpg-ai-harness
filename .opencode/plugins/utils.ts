@@ -13,7 +13,7 @@ export const EDIT_TOOLS = new Set([
 
 export type WriteLogBody = {
   service: string;
-  level: string;
+  level: "debug" | "info" | "error" | "warn";
   message: string;
   extra: Record<string, unknown>;
 };
@@ -24,7 +24,7 @@ export type WriteLog = {
 };
 
 export const writeLog = async ({ directory, body }: WriteLog) => {
-  const logDir = join(directory, "logs/opencode");
+  const logDir = join(directory, `logs/${body.service}`);
   await mkdir(logDir, { recursive: true });
   const now = dayjs().format("YYYY-MM-DD");
   const logFile = join(logDir, `plugin-debug_${now}.log`);
