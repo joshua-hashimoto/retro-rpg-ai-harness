@@ -23,10 +23,10 @@ export type WriteLog = {
   body: WriteLogBody;
 };
 
-export const writeLog = async ({ directory, body }: WriteLog) => {
+export const writeLog = ({ directory, body }: WriteLog) => {
   const logDir = join(directory, `logs/${body.service}`);
-  await mkdir(logDir, { recursive: true });
+  mkdir(logDir, { recursive: true });
   const now = dayjs().format("YYYY-MM-DD");
   const logFile = join(logDir, `plugin-debug_${now}.log`);
-  await appendFile(logFile, `${JSON.stringify(body)}\n`);
+  appendFile(logFile, `${JSON.stringify(body)}\n`);
 };

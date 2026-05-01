@@ -10,7 +10,7 @@ export const EnvProtectionPlugin: Plugin = async ({ directory, client }) => {
         directory,
         body: {
           service: "EnvProtectionPlugin",
-          level: "Info",
+          level: "info",
           message,
           extra: {
             ...extra,
