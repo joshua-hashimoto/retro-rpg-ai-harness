@@ -1,4 +1,7 @@
 """Base character model shared by player and enemies."""
+
+from typing import Self
+
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -24,10 +27,10 @@ class CharacterModel(BaseModel):
         """Return True if hp is greater than zero."""
         return self.hp > 0
 
-    def take_damage(self, amount: int) -> "CharacterModel":
+    def take_damage(self, amount: int) -> Self:
         """Return a copy with hp reduced by amount (minimum 0)."""
         return self.model_copy(update={"hp": max(0, self.hp - amount)})
 
-    def heal_full(self) -> "CharacterModel":
+    def heal_full(self) -> Self:
         """Return a copy with hp restored to max_hp."""
         return self.model_copy(update={"hp": self.max_hp})

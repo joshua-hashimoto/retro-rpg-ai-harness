@@ -1,4 +1,5 @@
 """Enemy model extending CharacterModel with reward data."""
+
 from pydantic import Field
 
 from app.models.character_model import CharacterModel

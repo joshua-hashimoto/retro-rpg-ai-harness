@@ -207,7 +207,9 @@ def test_battle_player_wins():
         is_boss=False,
     )
     new_player, victory, msg, exp, gold = battle(
-        player, enemy, player_action_provider=lambda p, e: "attack",
+        player,
+        enemy,
+        player_action_provider=lambda p, e: "attack",
     )
     assert victory is True
     assert new_player.alive is True
@@ -227,9 +229,18 @@ def test_battle_enemy_wins():
         gold_reward=50,
         is_boss=False,
     )
-    new_player, victory, msg, exp, gold = battle(
-        player, enemy, player_action_provider=lambda p, e: "attack",
-    )
+
+    def action_provider(p, e):
+        return "attack"
+
+    with patch("app.game.battle.enemy_turn") as mock_turn:
+        mock_turn.return_value = (
+            player.model_copy(update={"hp": 0}),
+            "Strong attacked Weak for 10 damage!",
+            "attack",
+        )
+        new_player, victory, msg, exp, gold = battle(player, enemy, action_provider)
+
     assert victory is False
     assert not new_player.alive
     assert exp == 0

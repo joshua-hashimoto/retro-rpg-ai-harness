@@ -1,4 +1,5 @@
 """Experience and level-up utility functions."""
+
 from app.models.player_model import PlayerModel
 
 

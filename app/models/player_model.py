@@ -1,29 +1,30 @@
 """Player model with level, experience, potions, and gold."""
+
+from pydantic import Field, model_validator
+
 from app.models.character_model import CharacterModel
 
 
 class PlayerModel(CharacterModel):
     """Pydantic model representing the player character."""
 
+    max_hp: int = Field(default=30, gt=0)
+    hp: int = Field(default=30, ge=0)
+    attack: int = Field(default=5, ge=0)
+    defense: int = Field(default=1, ge=0)
     level: int = 1
     exp: int = 0
     next_exp: int = 10
     potions: int = 3
     gold: int = 10
 
-    def __init__(self, **data: object) -> None:
-        """Initialize the player with sensible defaults when stats are omitted."""
-        if "max_hp" not in data:
-            data["max_hp"] = 30
+    @model_validator(mode="before")
+    @classmethod
+    def set_default_stats(cls, data: dict[str, object]) -> dict[str, object]:
+        """Set hp to max_hp when hp is not explicitly provided."""
         if "hp" not in data:
-            data["hp"] = data["max_hp"]
-        if "attack" not in data:
-            data["attack"] = 5
-        if "defense" not in data:
-            data["defense"] = 1
-        if "gold" not in data:
-            data["gold"] = 10
-        super().__init__(**data)
+            data["hp"] = data.get("max_hp", 30)
+        return data
 
     def use_potion(self) -> "PlayerModel":
         """Consume one potion and restore HP to max; return self if no potions remain."""

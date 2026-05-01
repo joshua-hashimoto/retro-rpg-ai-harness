@@ -1,123 +1,140 @@
 """Entry point for the Simple RPG game."""
+
 from app.game.battle import battle
 from app.game.exp import gain_exp_and_check_level_up
+from app.game.tui import (
+    BOSS_UNLOCK_DEFEATS,
+    BOSS_UNLOCK_LEVEL,
+    get_battle_action,
+    get_user_choice,
+    show_battle_turn,
+    show_boss_appears,
+    show_boss_not_ready,
+    show_complete_battle_result,
+    show_enemy_appears,
+    show_game_over,
+    show_inn_rest,
+    show_main_menu,
+    show_thanks,
+    show_title,
+    show_welcome,
+)
 from app.models.enemy_data import BOSS_ENEMY, get_random_enemy
 from app.models.player_model import PlayerModel
 
-BOSS_UNLOCK_DEFEATS = 5
-BOSS_UNLOCK_LEVEL = 3
 
-
-def show_main_menu(player: PlayerModel, defeated_count: int) -> None:
-    """Display the main action menu.
+def fight_enemy(player: PlayerModel, defeated_count: int) -> tuple[PlayerModel, int, bool]:
+    """Fight a random enemy.
 
     Args:
         player: The current player state.
         defeated_count: Number of enemies defeated so far.
 
+    Returns:
+        A tuple of (updated_player, updated_defeated_count, game_over).
+
     """
-    print("\n==== MAIN MENU ====")
-    print(
-        f"Defeated: {defeated_count} | Level: {player.level} | "
-        f"Gold: {player.gold}G | Potions: {player.potions}",
-    )
-    print(f"HP: {player.hp}/{player.max_hp} | EXP: {player.exp}/{player.next_exp}")
-    print("1) Fight Enemy")
-    print("2) Rest at Inn (Full HP) - 10G")
-    if defeated_count >= BOSS_UNLOCK_DEFEATS or player.level >= BOSS_UNLOCK_LEVEL:
-        print("3) Challenge Boss")
-    print("q) Quit")
-
-
-def get_user_choice() -> str:
-    """Prompt the user and return a valid menu choice."""
-    while True:
-        choice = input("> ").strip().lower()
-        if choice in ["1", "2", "3", "q"]:
-            return choice
-        print("Invalid choice. Please try again.")
-
-
-def choose_action_in_battle(player: PlayerModel) -> str:
-    """Prompt the player to choose a battle action and return it."""
-    while True:
-        print("\n1) Attack")
-        if player.potions > 0:
-            print("2) Use Potion")
-        choice = input("Action: ").strip()
-        if choice == "1":
-            return "attack"
-        if choice == "2" and player.potions > 0:
-            return "potion"
-        print("Invalid action.")
-
-
-def _fight_enemy(
-    player: PlayerModel, defeated_count: int
-) -> tuple[PlayerModel, int, bool]:
     enemy = get_random_enemy()
-    print(f"\nA wild {enemy.name} appears!")
-    print(f"Enemy Stats: HP {enemy.hp}, ATK {enemy.attack}, DEF {enemy.defense}")
+    show_enemy_appears(enemy)
+
     player, victory, msg, exp, gold = battle(
-        player, enemy, lambda p, _e: choose_action_in_battle(p)
+        player,
+        enemy,
+        player_action_provider=get_battle_action,
+        on_log=show_battle_turn,
     )
-    print(msg)
     if not victory:
+        show_complete_battle_result(msg, victory)
         return player, defeated_count, True
-    defeated_count += 1
-    player, leveled_up = gain_exp_and_check_level_up(player, exp)
-    player = player.gain_gold(gold)
-    if leveled_up:
-        print(f"\n*** LEVEL UP! You are now level {player.level}. ***")
+    level_up_message = None
+    if exp > 0:
+        defeated_count += 1
+        player, leveled_up = gain_exp_and_check_level_up(player, exp)
+        player = player.gain_gold(gold)
+        if leveled_up:
+            level_up_message = f"[bold green]*** LEVEL UP! You are now level {player.level}. ***"
+    show_complete_battle_result(msg, victory, exp, gold, level_up_message)
     return player, defeated_count, False
 
 
-def _challenge_boss(
-    player: PlayerModel, defeated_count: int
-) -> tuple[PlayerModel, bool]:
+def challenge_boss(player: PlayerModel, defeated_count: int) -> tuple[PlayerModel, bool]:
+    """Challenge the boss.
+
+    Args:
+        player: The current player state.
+        defeated_count: Number of enemies defeated so far.
+
+    Returns:
+        A tuple of (updated_player, game_over).
+
+    """
     if not (defeated_count >= BOSS_UNLOCK_DEFEATS or player.level >= BOSS_UNLOCK_LEVEL):
-        print("\nYou are not ready yet. Defeat 5 enemies or reach level 3.")
+        show_boss_not_ready()
         return player, False
-    print("\n=== BOSS BATTLE ===")
+
     boss = BOSS_ENEMY.model_copy()
-    print(f"The mighty {boss.name} appears!")
-    print(f"Boss Stats: HP {boss.hp}, ATK {boss.attack}, DEF {boss.defense}")
-    player, victory, msg, _, _ = battle(
-        player, boss, lambda p, _e: choose_action_in_battle(p)
+    show_boss_appears(boss)
+
+    player, victory, msg, exp, gold = battle(
+        player,
+        boss,
+        player_action_provider=get_battle_action,
+        on_log=show_battle_turn,
     )
-    print(msg)
-    if victory:
-        print("\n*** CONGRATULATIONS! You defeated the boss and saved the world! ***")
-    return player, True
+    if not victory:
+        show_complete_battle_result(msg, victory)
+        return player, True
+    if victory and exp > 0:
+        victory_message = (
+            "[bold green]*** CONGRATULATIONS! You defeated the boss "
+            "and saved the world! ***[/bold green]"
+        )
+        show_complete_battle_result(msg, victory, exp, gold, victory_message)
+        return player, True
+    return player, False
+
+
+def rest_at_inn(player: PlayerModel) -> PlayerModel:
+    """Rest at the inn to restore HP.
+
+    Args:
+        player: The current player state.
+
+        The updated player with full HP.
+
+    """
+    player = player.heal_full()
+    show_inn_rest()
+    return player
 
 
 def main() -> None:
     """Run the main game loop."""
-    print("==== SIMPLE RPG ====")
+    show_title()
     name = input("Enter your name: ").strip() or "Hero"
     player = PlayerModel(name=name)
     defeated_count = 0
     game_over = False
 
-    print(f"\nWelcome, {player.name}! Defeat enemies to level up, then challenge the boss.\n")
+    show_welcome(player.name)
+    print("🎮 Random debug print: Game initialized!")
 
     while not game_over:
         show_main_menu(player, defeated_count)
         choice = get_user_choice()
 
         if choice == "1":
-            player, defeated_count, game_over = _fight_enemy(player, defeated_count)
+            player, defeated_count, game_over = fight_enemy(player, defeated_count)
         elif choice == "2":
-            player = player.heal_full()
-            print("\nYou rested at the inn. HP fully restored!\n")
+            player = rest_at_inn(player)
         elif choice == "3":
-            player, game_over = _challenge_boss(player, defeated_count)
-        elif choice == "q":
-            print("\nThanks for playing!")
+            player, game_over = challenge_boss(player, defeated_count)
+        elif choice == "0":
+            show_thanks()
             game_over = True
 
     if not player.alive:
-        print("\nGAME OVER")
+        show_game_over()
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 """Predefined enemy instances and random enemy selection."""
+
 import random
 
 from app.models.enemy_model import EnemyModel
@@ -25,7 +26,14 @@ REGULAR_ENEMIES = [
         is_boss=False,
     ),
     EnemyModel(
-        name="Rat", max_hp=8, hp=8, attack=2, defense=0, exp_reward=3, gold_reward=4, is_boss=False,
+        name="Rat",
+        max_hp=8,
+        hp=8,
+        attack=2,
+        defense=0,
+        exp_reward=3,
+        gold_reward=4,
+        is_boss=False,
     ),
     EnemyModel(
         name="Skeleton",
@@ -38,7 +46,14 @@ REGULAR_ENEMIES = [
         is_boss=False,
     ),
     EnemyModel(
-        name="Bat", max_hp=6, hp=6, attack=3, defense=0, exp_reward=4, gold_reward=3, is_boss=False,
+        name="Bat",
+        max_hp=6,
+        hp=6,
+        attack=3,
+        defense=0,
+        exp_reward=4,
+        gold_reward=3,
+        is_boss=False,
     ),
     EnemyModel(
         name="Wolf",
